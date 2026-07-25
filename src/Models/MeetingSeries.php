@@ -17,6 +17,7 @@ class MeetingSeries extends Model
 
     protected $fillable = [
         'uuid',
+        'ical_uid',
         'user_id',
         'team_id',
         'title',
