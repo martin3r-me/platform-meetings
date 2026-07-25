@@ -61,6 +61,12 @@ class MeetingSeries extends Model
                 $model->is_active = true;
             }
         });
+
+        // Cascade: löscht man eine Serie, verschwinden ihre Vorkommen mit (soft) —
+        // sonst bleiben Waisen-Meetings im Dashboard hängen.
+        static::deleting(function (self $model) {
+            $model->meetings()->get()->each->delete();
+        });
     }
 
     public function user()
