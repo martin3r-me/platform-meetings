@@ -12,8 +12,12 @@ use Platform\Organization\Services\EntityLinkRegistry;
  * Am Knoten verlinkte Meeting-Instanzen (morph `meeting`).
  *
  * Die Instanz steuert WISSEN zum Puls bei (Anzahl Meetings, Agenda-Punkte,
- * Notizen, Tage seit letztem Termin) — bewusst KEINE Zeit: die Ist-Zeit kommt
- * aus den Inbox-Items (Phase A). Dadurch keine Doppelzählung.
+ * Notizen, Tage seit letztem Termin) UND die Ist-Zeit: pro Teilnehmer bucht
+ * MaterializeMeetingTimeCommand eine OrganizationTimeEntry mit
+ * context_type = Meeting::class auf DAS Meeting (nicht mehr aufs Inbox-Item).
+ * Der EntityTimeResolver rollt diese Zeit über den `meeting`-Link auf den Knoten
+ * auf; weil jeder Teilnehmer eine eigene Buchung auf dasselbe Meeting hat,
+ * summieren sich die Personenstunden am gemeinsamen Knoten.
  */
 class MeetingsEntityLinkProvider implements EntityLinkProvider, HasMetricDefinitions
 {
@@ -50,11 +54,14 @@ class MeetingsEntityLinkProvider implements EntityLinkProvider, HasMetricDefinit
     }
 
     /**
-     * Meetings tragen keine Zeit — die läuft über die Inbox-Items (Phase A).
+     * Das Meeting SELBST trägt die Ist-Zeit (context_type = Meeting::class).
+     * Keine Child-Relations — die Buchungen hängen direkt am Meeting.
      */
     public function timeTrackableCascades(): array
     {
-        return [];
+        return [
+            'meeting' => [Meeting::class, []],
+        ];
     }
 
     /**
